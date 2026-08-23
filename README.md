@@ -12,32 +12,57 @@
   <img alt="Status" src="https://img.shields.io/badge/Status-Complete-4FB0A5">
 </p>
 
+<p align="left">
+  <a href="PowerBI/working_demo.mp4"><img alt="Watch Demo" src="https://img.shields.io/badge/▶-Watch_the_Dashboard_Demo-1B3A5C"></a>
+  <a href="docs/HospitalIQ_project_report.pdf"><img alt="Read Report" src="https://img.shields.io/badge/📄-Read_the_Project_Report-2E75B6"></a>
+  <a href="docs/data_quality_findings.md"><img alt="Data Quality" src="https://img.shields.io/badge/🔍-Data_Quality_Writeup-2E75B6"></a>
+</p>
+
 ---
 
 ## Overview
-
-HospitalIQ mirrors a real hospital operations & BI workflow end-to-end: raw CSVs are loaded into SQL Server, audited, cleaned with **documented, defensible decisions**, analyzed with T-SQL, visualized in an executive Power BI dashboard, and finally used to train a model that predicts 30-day patient readmission.
-
-The dataset is [**Synthea**](https://synthetichealth.github.io/synthea/) synthetic EHR data — 100% synthetic, no real patient information — but structured to behave like genuine hospital data, warts and all: a dropped row on ingest, blank-vs-`NULL` ambiguity, encounters logged after a patient's recorded death date. Every quirk here was investigated and written up rather than quietly dropped or ignored, because that judgment is the actual point of the project.
-
-> Raw data → validated data → SQL analytics → BI storytelling → predictive ML — with every interpretation decision documented, not buried in a query.
-
+ 
+Most portfolio data projects are tutorials with a different dataset swapped in. HospitalIQ isn't — it's built to show how a single analyst-level workflow actually holds together end to end, across three connected layers (SQL, BI, ML) that all sit on one validated database, each accountable to the same source of truth.
+ 
+It runs on [**Synthea**](https://synthetichealth.github.io/synthea/) synthetic EHR data — 100% synthetic, zero real patient information — deliberately structured to misbehave like real hospital data: a row silently dropped on ingest, blank-vs-`NULL` ambiguity, encounters logged after a patient's recorded death date. None of it was cleaned away quietly. It was investigated, decided on, and documented — because that judgment is the actual deliverable here, not the SQL itself.
+ 
+**What this project is built to prove:**
+ 
+| Skill | Evidence |
+|---|---|
+| Data engineering judgment | A silent `BULK INSERT` data-loss bug, caught via a foreign-key integrity check — not a row count, which would have missed it entirely. |
+| Analytical honesty | Ambiguous business questions ("what's the readmission rate?") get *two* documented answers, not one silently chosen and hidden. |
+| BI storytelling | A Power BI report designed to be read and understood in under 30 seconds by someone who's never seen the data. |
+| ML with accountability | A model explained with SHAP, not just scored — plus a written caveats section on exactly where a 0.907 AUC would *not* hold up in production. |
+ 
 **Stack:** SQL Server / T-SQL · Power BI Desktop · Python (pandas, scikit-learn, XGBoost, SHAP, SQLAlchemy, pyodbc)
+
+## Table of Contents
+
+- [Architecture](#architecture)
+- [At a Glance](#at-a-glance)
+- [Repository Structure](#repository-structure)
+- [The Dashboard](#the-dashboard)
+- [Data Quality & Interpretation](#data-quality--interpretation)
+- [Machine Learning — 30-Day Readmission Model](#machine-learning--30-day-readmission-model)
+- [Reproducing This Project](#reproducing-this-project)
+- [Reports & Documentation](#reports--documentation)
+- [Data Source](#data-source)
+- [License](#license)
 
 ## Architecture
 
-```
-Synthea CSVs (synthetic EHR)
-patients · encounters · procedures · payers · organizations
-      │
-      ▼   BULK INSERT + validation   (sql/01 → 02 → 03)
-SQL Server — hospital_db
-      │
-      ├──────────────────┐
-      ▼                   ▼
-Power BI dashboard    Python ML pipeline
-3 pages: Ops · Financial ·          SQLAlchemy → XGBoost + SHAP
-Patient Risk   (sql/04–06)          (notebooks/readmission_model.ipynb)
+```mermaid
+flowchart TD
+    A["🗂️ Synthea CSVs — synthetic EHR<br/>patients · encounters · procedures · payers · organizations"]
+    A -->|"BULK INSERT + validation<br/>sql/01 → 02 → 03"| B[("🗄️ SQL Server<br/>hospital_db")]
+    B --> C["📊 Power BI Dashboard<br/>3 pages: Ops · Financial · Patient Risk<br/>sql/04 → 06"]
+    B --> D["🐍 Python ML Pipeline<br/>SQLAlchemy → XGBoost + SHAP<br/>notebooks/readmission_model.ipynb"]
+
+    style A fill:#1B3A5C,color:#fff,stroke:#1B3A5C
+    style B fill:#2E75B6,color:#fff,stroke:#2E75B6
+    style C fill:#F2C811,color:#111,stroke:#F2C811
+    style D fill:#4FB0A5,color:#111,stroke:#4FB0A5
 ```
 
 All three layers read from the same validated `hospital_db` — every number on the dashboard, in a query result, and inside the model traces back to one documented source of truth.
@@ -63,7 +88,13 @@ HospitalIQ/
 ├── docs/          data_quality_findings.md · project report (PDF/PPTX)
 └── LICENSE
 ```
-Each folder has its own README with details specific to that layer.
+
+| Folder | README |
+|---|---|
+| [`sql/`](sql) — schema, cleaning, and the 3 analytics objectives | [`sql/README.md`](sql/README.md) |
+| [`PowerBI/`](PowerBI) — the dashboard, theme, and demo video | [`PowerBI/README.md`](PowerBI/README.md) |
+| [`notebooks/`](notebooks) — the readmission model | inline in [`readmission_model.ipynb`](notebooks/readmission_model.ipynb) |
+| [`docs/`](docs) — data quality findings & the full project report | [`docs/data_quality_findings.md`](docs/data_quality_findings.md) |
 
 ## The Dashboard
 
@@ -91,7 +122,7 @@ Every anomaly found during ingestion was investigated and documented as a decisi
 
 Several business questions also admit more than one valid reading. Rather than picking one silently, both are reported:
 
-| Question | Interpretation used | Alternative |
+| Question | Interpretation | Alternative |
 |---|---|---|
 | "Zero payer coverage" | `PAYER_COVERAGE = 0` — 13,586 encounters (48.71%) | `PAYER = 'NO_INSURANCE'` — 8,807 encounters (31.58%) |
 | "Readmitted within 30 days" | Any encounter within 30 days — 772 patients (~79%) | Inpatient-to-inpatient only — ~29 patients |
@@ -114,7 +145,7 @@ Full write-up with evidence and rationale for each: [`docs/data_quality_findings
 The ROC comparison shows the ~10-point AUC gap that justifies XGBoost's extra complexity. SHAP feature importance confirms *why* it works: predictions are driven by **prior encounter count, days since last visit, claim cost, and age** — clinical signal, not demographic proxy. Race and gender rank near the bottom, which is exactly what a clinically credible model should show.
 
 <p align="center">
-  <img src="notebooks/shap_importance.png" width=40%">
+  <img src="notebooks/shap_importance.png" width="40%">
   <img src="notebooks/shap_beeswarm.png" width="40%">
 </p>
 
@@ -129,6 +160,14 @@ The beeswarm adds direction on top of magnitude: a **recent prior visit and a hi
 3. Open `PowerBI/HospitalIQ_Dashboard.pbix` in Power BI Desktop and point it at your local `hospital_db`.
 4. Open `notebooks/readmission_model.ipynb` (`pandas`, `scikit-learn`, `xgboost`, `shap`, `sqlalchemy`, `pyodbc`), set the connection string, run all cells.
 
+## Reports & Documentation
+
+| Document | What's in it |
+|---|---|
+| [`docs/data_quality_findings.md`](docs/data_quality_findings.md) | The full audit trail — every issue found, root cause, fix, and the reasoning behind each interpretation decision. |
+| [`docs/HospitalIQ_project_report.pdf`](docs/HospitalIQ_project_report.pdf) | The complete written project report. |
+| [`docs/HospitalIQ_project_report.pptx`](docs/HospitalIQ_project_report.pptx) | Slide-deck version of the same report, for presentation. |
+
 ## Data Source
 
 Walonoski J, Kramer M, Nichols J, et al. *Synthea: An approach, method, and software mechanism for generating synthetic patients and the synthetic electronic health care record.* JAMIA, March 2018. https://doi.org/10.1093/jamia/ocx079
@@ -142,7 +181,6 @@ Released under the [MIT License](LICENSE).
 **Sahaj K.**
 
 [![GitHub](https://img.shields.io/badge/GitHub-k--sahaj-181717?logo=github&logoColor=white)](https://github.com/k-sahaj)
-
 
 ---
 
