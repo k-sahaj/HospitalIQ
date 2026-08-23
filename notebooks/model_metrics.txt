@@ -1,0 +1,18 @@
+30-Day Readmission Prediction — Model Performance
+=======================================================
+
+Dataset: 27,891 encounters, 974 patients
+Train/Test split: 80/20 stratified
+
+Logistic Regression AUC: 0.8051
+XGBoost AUC: 0.9065
+
+XGBoost classification report:
+              precision    recall  f1-score   support
+
+           0       0.76      0.79      0.77      2145
+           1       0.87      0.84      0.85      3434
+
+    accuracy                           0.82      5579
+   macro avg       0.81      0.82      0.81      5579
+weighted avg       0.82      0.82      0.82      5579
