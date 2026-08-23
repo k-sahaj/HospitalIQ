@@ -1,0 +1,104 @@
+{
+  "name": "Clinical Ops — Navy & Acuity",
+  "dataColors": [
+    "#1B3A5C",
+    "#2E75B6",
+    "#4FB0A5",
+    "#E8A33D",
+    "#C1443C",
+    "#6B4E8E",
+    "#8FA6B8",
+    "#0F2440"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#1C1C1E",
+  "tableAccent": "#1B3A5C",
+  "good": "#4FB0A5",
+  "neutral": "#E8A33D",
+  "bad": "#C1443C",
+  "maximum": "#1B3A5C",
+  "center": "#8FA6B8",
+  "minimum": "#F5F6F8",
+  "null": "#D0D3D8",
+  "textClasses": {
+    "callout": {
+      "fontSize": 40,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#1B3A5C"
+    },
+    "title": {
+      "fontSize": 13,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#1C1C1E"
+    },
+    "header": {
+      "fontSize": 12,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#1C1C1E"
+    },
+    "label": {
+      "fontSize": 10,
+      "fontFace": "Segoe UI",
+      "color": "#4A4A4C"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": { "solid": { "color": "#FFFFFF" } },
+            "transparency": 0
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": { "solid": { "color": "#E4E6EA" } },
+            "radius": 8
+          }
+        ],
+        "outspacePane": [
+          {
+            "backgroundColor": { "solid": { "color": "#F7F8FA" } }
+          }
+        ],
+        "title": [
+          {
+            "show": true,
+            "fontColor": { "solid": { "color": "#1C1C1E" } },
+            "fontSize": 13,
+            "fontFamily": "Segoe UI Semibold",
+            "background": { "solid": { "color": "#FFFFFF" } }
+          }
+        ]
+      }
+    },
+    "card": {
+      "*": {
+        "labels": [
+          {
+            "color": { "solid": { "color": "#1B3A5C" } },
+            "fontSize": 32,
+            "fontFamily": "Segoe UI Semibold"
+          }
+        ],
+        "categoryLabels": [
+          {
+            "color": { "solid": { "color": "#4A4A4C" } },
+            "fontSize": 11,
+            "fontFamily": "Segoe UI"
+          }
+        ]
+      }
+    },
+    "slicer": {
+      "*": {
+        "background": [
+          { "show": true, "color": { "solid": { "color": "#F7F8FA" } } }
+        ]
+      }
+    }
+  }
+}
