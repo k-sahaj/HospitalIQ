@@ -1,6 +1,8 @@
 /* ============================================================================
    01_setup_sqlserver.sql
    ----------------------------------------------------------------------------
+   DON'T RUN THIS ALL AT ONCE. IT WILL THROW ERROR!!!
+   
    Creates the hospital_db database, all tables, and loads data from CSV files.
    Dialect: SQL Server / T-SQL (run in SSMS).
 
@@ -43,6 +45,47 @@ GO
 USE hospital_db;
 GO
 
+
+/* THERE ARE TWO APPROACHES HERE:
+ 1. CREATE TABLES AND THEN BULK INSERT FROM LOCALLY STORED CSV
+ 2. MANUALLY IMPORT THOSE CSV FILES USING FLAT FILE IMPORT
+
+ Option 1 is not working because of the formatting issue.
+ Thus, to generalize this and make this more reproducible, i have decided to opt
+ the second approach. You should too. 
+
+ - Right click on hospital_db -> Tasks -> Import flat file -> Browse -> do the essentials.
+ - Once the files are imported, we are done.
+ */
+
+-- ============================================================================
+-- INDEXES FOR QUERY PERFORMANCE
+-- ============================================================================
+-- Created after the bulk load (cheaper than maintaining them row-by-row
+-- during insert).
+CREATE INDEX idx_enc_patient ON encounters(PATIENT);
+CREATE INDEX idx_enc_payer   ON encounters(PAYER);
+CREATE INDEX idx_enc_start   ON encounters(START);
+CREATE INDEX idx_proc_enc    ON [procedures](ENCOUNTER);
+CREATE INDEX idx_proc_code   ON [procedures](CODE);
+GO
+
+
+-- ============================================================================
+-- VERIFY THE LOAD
+-- ============================================================================
+SELECT 'patients'      AS table_name, COUNT(*) AS row_count FROM patients
+UNION ALL SELECT 'encounters',     COUNT(*) FROM encounters
+UNION ALL SELECT 'procedures',     COUNT(*) FROM [procedures]
+UNION ALL SELECT 'payers',         COUNT(*) FROM payers
+UNION ALL SELECT 'organizations',  COUNT(*) FROM organizations;
+
+-- Expected: 974 / 27,891 / 47,701 / 10 / 1
+-- If patients = 973, see 03_data_fixes.sql for the missing-patient reload.
+
+
+/* If still you think the normal approach can work, you're free to experiment:
+(just change the file location with your own)
 
 -- ============================================================================
 -- TABLE DEFINITIONS
@@ -141,7 +184,7 @@ GO
 -- This is corrected in 03_data_fixes.sql.
 
 BULK INSERT payers
-FROM 'C:\HospitalData\payers.csv'
+FROM 'C:\local disk C files\OneDrive\Desktop\PPrep\DS\Data_Analyst_Projects\HospitalIQ\dataset\payers.csv'
 WITH (
     FIRSTROW = 2,
     FIELDTERMINATOR = ',',
@@ -152,56 +195,32 @@ WITH (
 );
 
 BULK INSERT organizations
-FROM 'C:\HospitalData\organizations.csv'
+FROM 'C:\local disk C files\OneDrive\Desktop\PPrep\DS\Data_Analyst_Projects\HospitalIQ\dataset\organizations.csv'
 WITH (
     FIRSTROW = 2, FIELDTERMINATOR = ',', ROWTERMINATOR = '0x0a',
     CODEPAGE = '65001', FORMAT = 'CSV', KEEPNULLS
 );
 
 BULK INSERT patients
-FROM 'C:\HospitalData\patients.csv'
+FROM 'C:\local disk C files\OneDrive\Desktop\PPrep\DS\Data_Analyst_Projects\HospitalIQ\dataset\patients.csv'
 WITH (
     FIRSTROW = 2, FIELDTERMINATOR = ',', ROWTERMINATOR = '0x0a',
     CODEPAGE = '65001', FORMAT = 'CSV', KEEPNULLS
 );
 
 BULK INSERT encounters
-FROM 'C:\HospitalData\encounters.csv'
+FROM 'C:\local disk C files\OneDrive\Desktop\PPrep\DS\Data_Analyst_Projects\HospitalIQ\dataset\encounters.csv'
 WITH (
     FIRSTROW = 2, FIELDTERMINATOR = ',', ROWTERMINATOR = '0x0a',
     CODEPAGE = '65001', FORMAT = 'CSV', KEEPNULLS
 );
 
 BULK INSERT [procedures]
-FROM 'C:\HospitalData\procedures.csv'
+FROM 'C:\local disk C files\OneDrive\Desktop\PPrep\DS\Data_Analyst_Projects\HospitalIQ\dataset\procedures.csv'
 WITH (
     FIRSTROW = 2, FIELDTERMINATOR = ',', ROWTERMINATOR = '0x0a',
     CODEPAGE = '65001', FORMAT = 'CSV', KEEPNULLS
 );
 GO
 
-
--- ============================================================================
--- INDEXES FOR QUERY PERFORMANCE
--- ============================================================================
--- Created after the bulk load (cheaper than maintaining them row-by-row
--- during insert).
-CREATE INDEX idx_enc_patient ON encounters(PATIENT);
-CREATE INDEX idx_enc_payer   ON encounters(PAYER);
-CREATE INDEX idx_enc_start   ON encounters(START);
-CREATE INDEX idx_proc_enc    ON [procedures](ENCOUNTER);
-CREATE INDEX idx_proc_code   ON [procedures](CODE);
-GO
-
-
--- ============================================================================
--- VERIFY THE LOAD
--- ============================================================================
-SELECT 'patients'      AS table_name, COUNT(*) AS row_count FROM patients
-UNION ALL SELECT 'encounters',     COUNT(*) FROM encounters
-UNION ALL SELECT 'procedures',     COUNT(*) FROM [procedures]
-UNION ALL SELECT 'payers',         COUNT(*) FROM payers
-UNION ALL SELECT 'organizations',  COUNT(*) FROM organizations;
-
--- Expected: 974 / 27,891 / 47,701 / 10 / 1
--- If patients = 973, see 03_data_fixes.sql for the missing-patient reload.
+*/
